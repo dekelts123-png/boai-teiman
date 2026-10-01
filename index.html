@@ -224,12 +224,14 @@ async function loadSummary(){
  const {data,error}=await client.rpc('get_friday_manager_matrix',{p_pickup_date:d});
  if(error){msg(S.sumMsg,error.message);return}
  const products=data.products||[], orders=data.orders||[];
- let html='<table class="matrix"><tr><th>מוצר</th>'+orders.map(o=>'<th title="הזמנה מספר '+esc(o.order_number)+'">'+esc(o.customer_name||'ללא שם')+'</th>').join('')+'<th>סה״כ</th></tr>';
+ let html='<table class="matrix"><tr><th>מוצר</th>'+orders.map(o=>'<th title="הזמנה מספר '+esc(o.order_number)+'">'+esc(o.customer_name||'ללא שם')+'</th>').join('')+'<th>סה״כ</th><th>להכין</th></tr>';
  products.forEach(p=>{
   const label=p.variant?String(p.name)+' '+String(p.variant):p.name;
   const perOrder=orders.map(o=>Number((o.quantities||{})[p.id]||0));
   const total=Number((data.totals||{})[p.id]??perOrder.reduce((sum,q)=>sum+q,0));
-  html+='<tr><td>'+esc(label)+'</td>'+perOrder.map(q=>'<td>'+q+'</td>').join('')+'<td><b>'+total+'</b></td></tr>';
+  const collected=orders.reduce((sum,o,index)=>sum+(o.status==='collected'?perOrder[index]:0),0);
+  const remaining=Math.max(0,total-collected);
+  html+='<tr><td>'+esc(label)+'</td>'+perOrder.map(q=>'<td>'+q+'</td>').join('')+'<td><b>'+total+'</b></td><td><b>'+remaining+'</b></td></tr>';
  });
  html+='</table>';S.matrix.innerHTML=html;S.sumMsg.innerHTML='<div class="msg ok">הסיכום נטען.</div>';
 }
