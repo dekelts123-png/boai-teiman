@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#70482f">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>בואי תימן – מערכת עובדים</title>
+<style>
+:root{--brown:#70482f;--cream:#f7efe5;--line:#ead9c7;--text:#4b3022;--muted:#8e7563}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--text);font-family:Arial,sans-serif}
+.app{max-width:760px;margin:auto;min-height:100vh;background:#fffaf5}.top{position:sticky;top:0;background:#fffaf5;border-bottom:1px solid var(--line);padding:13px 15px;z-index:10;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:800;font-size:21px}.brand-logo{display:block;width:76px;height:76px;object-fit:contain}.brand small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+main{padding:15px 13px 90px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 2px 8px #5b3b1a08}
+h1,h2,h3{margin:0 0 12px}label{font-size:13px;font-weight:700}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid #d9c3ae;border-radius:10px;padding:11px;background:#fff;margin:5px 0 11px;color:var(--text)}textarea{min-height:80px;resize:vertical}
+button{width:100%;border:0;border-radius:10px;padding:12px;font-weight:800;cursor:pointer}.primary{background:var(--brown);color:white}.secondary{background:#eee0d1;color:var(--brown)}.danger{background:#f2d8d5;color:#8c2c23}.ghost{background:transparent;color:var(--brown);border:1px solid var(--line)}
+.action{margin-top:8px}.hidden{display:none!important}.msg{padding:10px;border-radius:10px;margin:9px 0;font-size:14px}.ok{background:#e2f0e4;color:#285d31}.bad{background:#f7dddd;color:#852c24}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.nav button{padding:9px;font-size:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.product{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin:7px 0;background:#fff}.product .info{min-width:0}.product .name{font-weight:700}.product .price{font-size:12px;color:var(--muted);margin-top:3px}.qty{display:flex;align-items:center;gap:6px}.qty button{width:38px;padding:8px}.qty-input{width:72px!important;margin:0!important;text-align:center;padding:8px!important;font-weight:800}.qty span{min-width:25px;text-align:center;font-weight:800}
+.category{margin-top:15px;font-size:17px;border-bottom:1px solid var(--line);padding-bottom:5px}.total{font-size:20px;font-weight:900;text-align:center;padding:13px;background:#f4e8da;border-radius:12px;margin-top:10px}.order{border:1px solid var(--line);border-radius:13px;padding:12px;margin:9px 0}.order-top{display:flex;justify-content:space-between;gap:8px}.order-num{font-weight:900}.small{font-size:12px;color:var(--muted)}.items{font-size:13px;line-height:1.6;margin:7px 0}.pill{display:inline-block;background:#eee0d1;border-radius:999px;padding:4px 8px;font-size:11px}
+.tablewrap{overflow:auto}.matrix{width:100%;border-collapse:collapse;font-size:12px}.matrix th,.matrix td{border:1px solid var(--line);padding:6px;text-align:center;white-space:nowrap}.matrix th{background:#f4e8da}
+.debug{font-size:11px;color:var(--muted);word-break:break-word;margin-top:8px}
+@media(max-width:520px){.row{grid-template-columns:1fr}.top{padding-top:10px}.nav{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><img src="./assets/logo.png" alt="בואי תימן" class="brand-logo"></div>
+  <button id="logoutBtn" class="ghost hidden" style="width:auto;padding:8px 12px">יציאה</button>
+</header>
+
+<section id="loginScreen">
+<main>
+<div class="card">
+<h2>כניסת עובדים</h2>
+<label>אימייל</label><input id="email" type="email" autocomplete="username">
+<label>סיסמה</label><input id="password" type="password" autocomplete="current-password">
+<button id="loginBtn" class="primary">כניסה</button>
+<button id="forgotBtn" class="secondary action">שכחתי סיסמה</button>
+<div id="loginMsg"></div><div id="debug" class="debug">טוען מערכת...</div>
+</div>
+</main>
+</section>
+
+<section id="appScreen" class="hidden">
+<main>
+<div id="homeView">
+<div class="card"><h2>שלום 👋</h2><p>בחר פעולה:</p>
+<button id="newOrderBtn" class="primary">➕ הזמנה חדשה</button>
+<button id="ordersBtn" class="secondary action">📋 הזמנות</button>
+<button id="summaryBtn" class="secondary action">📊 סיכום שישי</button>
+</div></div>
+
+<div id="orderView" class="hidden">
+<div class="card">
+<h2 id="orderTitle">הזמנה חדשה</h2>
+<div class="row"><div><label>שם לקוח</label><input id="customerName"></div><div><label>טלפון</label><input id="customerPhone" type="tel"></div></div>
+<div class="row"><div><label>תאריך איסוף (שישי)</label><input id="pickupDate" type="date"></div><div><label>מקור</label><select id="source"><option value="phone">טלפון</option><option value="in_person">הגעה למקום</option><option value="website">אתר</option></select></div></div>
+<label>הערה ללקוח</label><textarea id="customerNote"></textarea>
+<div id="products"></div><div id="orderTotal" class="total">סה״כ: ₪0</div>
+<div id="orderMsg"></div>
+<button id="saveOrderBtn" class="primary action">שמירת הזמנה</button>
+<button id="backHomeBtn" class="secondary action">חזרה</button>
+</div></div>
+
+<div id="ordersView" class="hidden">
+<div class="card"><h2>הזמנות</h2><button id="refreshOrdersBtn" class="secondary">רענון</button><div id="ordersList"></div><div id="ordersMsg"></div><button id="ordersBackBtn" class="secondary action">חזרה</button></div>
+</div>
+
+<div id="summaryView" class="hidden">
+<div class="card"><h2>סיכום שישי</h2><label>תאריך</label><input id="sumDate" type="date"><button id="loadSummaryBtn" class="primary">הצגת סיכום</button><div id="sumMsg"></div><div id="matrix" class="tablewrap"></div><button id="summaryBackBtn" class="secondary action">חזרה</button></div>
+</div>
+
+<div class="nav"><button id="navNew" class="secondary">הזמנה</button><button id="navOrders" class="secondary">הזמנות</button><button id="navSummary" class="secondary">סיכום</button></div>
+</main>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+'use strict';
+const SUPABASE_URL='https://qdbyoqnafxbpabffqtot.supabase.co';
+const SUPABASE_KEY='sb_publishable_4tH_ZAzs3qN2yXZV8SBuKg_QekvIfPj';
+const PRODUCTS=[
+['jachnun-dough','גחנון בצק',48,'גחנון'],['jachnun-dough-dairy','גחנון בצק חלבי',52,'גחנון'],['jachnun-baked','גחנון אפוי',58,'גחנון'],
+['kubaneh-pot-large','קובנה סיר גדול',55,'קובנה וקובניות'],['kubaneh-pot-medium','קובנה סיר בינוני',35,'קובנה וקובניות'],['kubaneh-pot-couple','קובנה סיר זוגי',30,'קובנה וקובניות'],['kubaneh-pot-personal','קובנה סיר אישי',25,'קובנה וקובניות'],['kubaniyot-large','קובניות גדול',55,'קובנה וקובניות'],['kubaniyot-large-dairy','קובניות חלבי גדול',60,'קובנה וקובניות'],['kubaniyot-medium','קובניות בינוני',35,'קובנה וקובניות'],['kubaniyot-medium-dairy','קובניות חלבי בינוני',40,'קובנה וקובניות'],
+['malawach','מלוואח',48,'מלוואח וסבאייה'],['malawach-dairy','מלוואח חלבי',57,'מלוואח וסבאייה'],['sabaya-1kg','סבאייה 1 קילו',150,'מלוואח וסבאייה'],['sabaya-2kg','סבאייה 2 קילו',170,'מלוואח וסבאייה'],
+['pita','פיתה',6,'לחמים'],['pita-small','פיתה קטנה',3.5,'לחמים'],['lachuch','לחוח',5,'לחמים'],
+['hilbe','חילבה',12,'תוספות'],['schug','סחוג',15,'תוספות'],['hawaij-soup','חוויג׳ מרק',32,'תוספות'],['white-coffee','קפה לבן',32,'תוספות']
+];
+const CAT=['לחמים','גחנון','קובנה וקובניות','מלוואח וסבאייה','תוספות'];
+const $=id=>document.getElementById(id);
+const S={
+ login:$('loginScreen'), app:$('appScreen'), logout:$('logoutBtn'), debug:$('debug'),
+ email:$('email'),pass:$('password'),loginMsg:$('loginMsg'),
+ home:$('homeView'),order:$('orderView'),orders:$('ordersView'),summary:$('summaryView'),
+ name:$('customerName'),phone:$('customerPhone'),date:$('pickupDate'),source:$('source'),note:$('customerNote'),
+ products:$('products'),total:$('orderTotal'),orderMsg:$('orderMsg'),ordersList:$('ordersList'),ordersMsg:$('ordersMsg'),
+ sumDate:$('sumDate'),sumMsg:$('sumMsg'),matrix:$('matrix')
+};
+let client=null, cart={}, catalog=PRODUCTS.map(([key,name,price,category])=>({key,id:null,name,price,category})), catalogError='';
+
+function msg(el,t,ok=false){el.innerHTML='<div class="msg '+(ok?'ok':'bad')+'">'+esc(t)+'</div>'}
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function dateFriday(){
+ const d=new Date(); const day=d.getDay(); const add=(5-day+7)%7; d.setDate(d.getDate()+add);
+ return d.toISOString().slice(0,10);
+}
+function show(view){[S.home,S.order,S.orders,S.summary].forEach(x=>x.classList.add('hidden'));view.classList.remove('hidden')}
+function renderProducts(){
+ S.products.innerHTML='';
+ if(catalogError){const warning=document.createElement('div');warning.className='msg bad';warning.textContent=catalogError;S.products.appendChild(warning)}
+ [...new Set([...CAT,...catalog.map(p=>p.category)])].forEach(cat=>{
+   const h=document.createElement('div');h.className='category';h.textContent=cat;S.products.appendChild(h);
+   catalog.filter(p=>p.category===cat).forEach(p=>{
+     const row=document.createElement('div');row.className='product';
+     row.innerHTML='<div class="info"><div class="name">'+esc(p.name)+'</div><div class="price">₪'+esc(p.price)+(p.id?'':' · בדיקת מוצר נדרשת')+'</div></div><div class="qty"><input class="qty-input" data-id="'+esc(p.key)+'" id="q-'+esc(p.key)+'" type="number" min="0" step="1" value="'+(cart[p.key]||0)+'" inputmode="numeric" aria-label="כמות '+esc(p.name)+'"></div>';
+     S.products.appendChild(row);
+   });
+ });
+ S.products.querySelectorAll('.qty-input').forEach(input=>{
+   const sync=()=>{
+     let value=parseInt(input.value,10);
+     if(!Number.isFinite(value)||value<0)value=0;
+     input.value=value;
+     cart[input.dataset.id]=value;
+     updateTotal();
+   };
+   input.addEventListener('input',sync);
+   input.addEventListener('change',sync);
+ });
+}
+function updateTotal(){let total=0;catalog.forEach(p=>total+=(cart[p.key]||0)*p.price);S.total.textContent='סה״כ: ₪'+total.toFixed(2).replace('.00','')}
+function norm(v){return String(v??'').normalize('NFKC').toLocaleLowerCase('he').replace(/[״׳"']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim()}
+function valueOf(row,keys){for(const k of keys)if(row[k]!==undefined&&row[k]!==null&&row[k]!=='')return row[k];return null}
+function mapProducts(rows){
+ const mapped=[];const used=new Set();
+ for(const spec of PRODUCTS){
+  const [slug,expectedName,expectedPrice,expectedCategory]=spec;
+  let matches=rows.filter(r=>String(valueOf(r,['slug','code','sku','product_code'])||'')===slug);
+  if(matches.length!==1){const want=norm(expectedName);matches=rows.filter(r=>norm(valueOf(r,['name','product_name','title','label']))===want)}
+  if(matches.length!==1||used.has(String(matches[0]?.id))){mapped.push({key:slug,id:null,name:expectedName,price:expectedPrice,category:expectedCategory});continue}
+  const r=matches[0], id=String(r.id||'');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)){mapped.push({key:slug,id:null,name:expectedName,price:expectedPrice,category:expectedCategory});continue}
+  used.add(id);
+  const dbCategory=valueOf(r,['category_name','category']);
+  const category=typeof dbCategory==='string'&&dbCategory.trim()&&!/^\d+$/.test(dbCategory.trim())?dbCategory.trim():expectedCategory;
+  const price=Number(valueOf(r,['price','unit_price','selling_price'])??expectedPrice);
+  if(!Number.isFinite(price)||price<0)throw new Error('המחיר של „'+expectedName+'” אינו תקין ב-Supabase.');
+  const dbName=valueOf(r,['name','product_name','title','label']);
+  const variant=valueOf(r,['variant']);
+  const displayName=dbName?(variant?String(dbName)+' '+String(variant):String(dbName)):expectedName;
+  mapped.push({key:slug,id,name:displayName,price,category});
+ }
+ return mapped;
+}
+async function loadProducts(){
+ catalogError='';renderProducts();
+ const {data,error}=await client.from('products').select('*');
+ if(error){catalogError='הקטלוג המקומי מוצג. לא ניתן לטעון מזהי מוצרים מ-Supabase ('+error.message+'); לא ניתן לשמור הזמנה עד שהחיבור יתוקן.';renderProducts();return}
+ catalog=mapProducts(data||[]);
+ const missing=catalog.filter(p=>!p.id);
+ if(missing.length)catalogError='חלק מהמוצרים מוצגים מהקטלוג המקומי, אך לא נמצאו ב-Supabase: '+missing.map(p=>p.name).join('، ')+'. ההזמנה תישמר רק אם תבחר מוצרים שמופו בהצלחה.';
+ renderProducts();updateTotal();
+}
+function newOrder(){cart={};renderProducts();S.name.value='';S.phone.value='';S.date.value=dateFriday();S.source.value='phone';S.note.value='';S.orderMsg.innerHTML='';show(S.order)}
+async function saveOrder(){
+ const name=S.name.value.trim(),phone=S.phone.value.trim(),date=S.date.value;
+ if(!name||!phone||!date){msg(S.orderMsg,'יש למלא שם, טלפון ותאריך.');return}
+ if(new Date(date+'T00:00:00').getDay()!==5){msg(S.orderMsg,'תאריך האיסוף חייב להיות יום שישי.');return}
+ const selected=catalog.filter(p=>cart[p.key]>0);
+ const unmapped=selected.filter(p=>!p.id);
+ if(unmapped.length){msg(S.orderMsg,'לא ניתן להזמין עדיין את המוצרים הבאים כי לא נמצא להם UUID ב-Supabase: '+unmapped.map(p=>p.name).join('، ')+'. יתר המוצרים זמינים.');return}
+ const items=selected.map(p=>({product_id:p.id,quantity:cart[p.key]}));
+ if(!items.length){msg(S.orderMsg,'בחר לפחות מוצר אחד.');return}
+ S.orderMsg.innerHTML='<div class="msg">שומר...</div>';
+ const {data,error}=await client.rpc('create_staff_order',{p_customer_name:name,p_customer_phone:phone,p_pickup_date:date,p_items:items,p_customer_note:S.note.value.trim()||null,p_source:S.source.value});
+ if(error){msg(S.orderMsg,error.message);return}
+ msg(S.orderMsg,'ההזמנה נשמרה בהצלחה — מספר '+(data.order_number||data.id),true);
+ cart={};renderProducts();
+}
+async function loadOrders(){
+ S.ordersList.innerHTML='<div class="small">טוען...</div>';S.ordersMsg.innerHTML='';
+ const {data,error}=await client.from('orders').select('id,order_number,customer_name,customer_phone,pickup_date,total,status,customer_note,created_at,order_items(product_name,variant,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
+ if(error){msg(S.ordersMsg,error.message);return}
+ S.ordersList.innerHTML=data.length?data.map(o=>'<div class="order"><div class="order-top"><span class="order-num">#'+esc(o.order_number)+'</span><span class="pill">'+esc(o.status)+'</span></div><b>'+esc(o.customer_name)+'</b><div class="small">'+esc(o.customer_phone)+' · '+esc(o.pickup_date)+'</div><div class="items">'+(o.order_items||[]).map(i=>esc(i.product_name)+' × '+i.quantity).join('<br>')+'</div><b>₪'+Number(o.total).toFixed(2)+'</b></div>').join(''):'אין הזמנות.';
+}
+async function loadSummary(){
+ const d=S.sumDate.value;if(!d){msg(S.sumMsg,'בחר תאריך.');return}
+ S.sumMsg.innerHTML='<div class="msg">טוען...</div>';S.matrix.innerHTML='';
+ const {data,error}=await client.rpc('get_friday_manager_matrix',{p_pickup_date:d});
+ if(error){msg(S.sumMsg,error.message);return}
+ const products=data.products||[], orders=data.orders||[];
+ let html='<table class="matrix"><tr><th>מוצר</th>'+orders.map(o=>'<th>#'+esc(o.order_number)+'</th>').join('')+'<th>סה״כ</th></tr>';
+ products.forEach(p=>{
+  const label=p.variant?String(p.name)+' '+String(p.variant):p.name;
+  const perOrder=orders.map(o=>Number((o.quantities||{})[p.id]||0));
+  const total=Number((data.totals||{})[p.id]??perOrder.reduce((sum,q)=>sum+q,0));
+  html+='<tr><td>'+esc(label)+'</td>'+perOrder.map(q=>'<td>'+q+'</td>').join('')+'<td><b>'+total+'</b></td></tr>';
+ });
+ html+='</table>';S.matrix.innerHTML=html;S.sumMsg.innerHTML='<div class="msg ok">הסיכום נטען.</div>';
+}
+async function login(){
+ const e=S.email.value.trim(),p=S.pass.value;if(!e||!p){msg(S.loginMsg,'יש להזין אימייל וסיסמה.');return}
+ S.debug.textContent='מתחבר...';
+ const {data,error}=await client.auth.signInWithPassword({email:e,password:p});
+ if(error){msg(S.loginMsg,error.message);S.debug.textContent='ההתחברות נכשלה.';return}
+ try{await loadProducts()}catch(e){console.error(e)}
+ S.login.classList.add('hidden');S.app.classList.remove('hidden');S.logout.classList.remove('hidden');show(S.home);S.debug.textContent='מחובר.';
+}
+async function init(){
+ try{
+  if(!window.supabase)throw new Error('ספריית Supabase לא נטענה. בדוק חיבור לאינטרנט.');
+  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  S.date.value=dateFriday();S.sumDate.value=dateFriday();
+  $('loginBtn').addEventListener('click',login);
+  $('forgotBtn').addEventListener('click',async()=>{const e=S.email.value.trim();if(!e){msg(S.loginMsg,'הזן אימייל.');return}const {error}=await client.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0]});error?msg(S.loginMsg,error.message):msg(S.loginMsg,'נשלח קישור לאיפוס הסיסמה.',true)});
+  $('logoutBtn').addEventListener('click',async()=>{await client.auth.signOut();location.reload()});
+  $('newOrderBtn').addEventListener('click',newOrder);$('navNew').addEventListener('click',newOrder);
+  $('ordersBtn').addEventListener('click',()=>{show(S.orders);loadOrders()});$('navOrders').addEventListener('click',()=>{show(S.orders);loadOrders()});
+  $('summaryBtn').addEventListener('click',()=>show(S.summary));$('navSummary').addEventListener('click',()=>show(S.summary));
+  $('backHomeBtn').addEventListener('click',()=>show(S.home));$('ordersBackBtn').addEventListener('click',()=>show(S.home));$('summaryBackBtn').addEventListener('click',()=>show(S.home));
+  $('saveOrderBtn').addEventListener('click',saveOrder);$('refreshOrdersBtn').addEventListener('click',loadOrders);$('loadSummaryBtn').addEventListener('click',loadSummary);
+  const {data}=await client.auth.getSession();if(data.session){await loadProducts();S.login.classList.add('hidden');S.app.classList.remove('hidden');S.logout.classList.remove('hidden');show(S.home)}
+  S.debug.textContent='JavaScript נטען והכפתורים מחוברים.';
+ }catch(e){S.debug.textContent='שגיאה: '+e.message;console.error(e)}
+}
+document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
+</body>
+</html>
