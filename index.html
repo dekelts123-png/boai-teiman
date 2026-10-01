@@ -214,6 +214,7 @@ async function init(){
  try{
   if(!window.supabase)throw new Error('ספריית Supabase לא נטענה. בדוק חיבור לאינטרנט.');
   client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed:',e));
   S.date.value=dateFriday();S.sumDate.value=dateFriday();
   $('loginBtn').addEventListener('click',login);
   $('forgotBtn').addEventListener('click',async()=>{const e=S.email.value.trim();if(!e){msg(S.loginMsg,'הזן אימייל.');return}const {error}=await client.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0]});error?msg(S.loginMsg,error.message):msg(S.loginMsg,'נשלח קישור לאיפוס הסיסמה.',true)});
